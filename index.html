@@ -1442,5 +1442,153 @@
 })();
 </script>
 
+<!-- ====================================================================== -->
+<!-- ARYAVARTA PHASE-3: TRAFO/PCC SIZER, LIVE CAPEX (₹), AUDIT & QR HUB     -->
+<!-- ====================================================================== -->
+<div id="qrShareModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4 no-print">
+  <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl relative">
+    <button onclick="toggleQrModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+    <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center font-extrabold text-white mx-auto mb-2">AA</div>
+    <h3 class="text-base font-bold text-white">Scan to Open Engineering Toolkit</h3>
+    <p class="text-xs text-slate-400 mt-1 mb-4">Have a fellow consultant or site engineer scan this QR to open the Aryavarta Toolkit on their phone.</p>
+    <div class="bg-white p-4 rounded-xl inline-block mx-auto mb-4 shadow-inner"><img id="qrCodeImg" src="" alt="Toolkit QR Code" class="w-44 h-44 mx-auto" /></div>
+    <p class="text-[11px] text-amber-400 font-semibold">Aryavarta Automation • www.aryavartaautomation.in</p>
+  </div>
+</div>
+<script>
+(function initPhase3CommercialEngine() {
+  // Add the Plant PCC tab once.
+  const tabContainers = document.querySelectorAll('.grid.grid-cols-2');
+  const mainTabBar = tabContainers[0];
+  if (mainTabBar && !document.getElementById('tab-pcc')) {
+    mainTabBar.classList.remove('lg:grid-cols-4', 'lg:grid-cols-5', 'lg:grid-cols-6');
+    mainTabBar.classList.add('sm:grid-cols-4', 'lg:grid-cols-7');
+    const pccTabBtn = document.createElement('button');
+    pccTabBtn.id = 'tab-pcc';
+    pccTabBtn.className = 'tab-btn flex items-center gap-2 p-3 rounded-xl border border-slate-800 bg-slate-900 text-slate-300 hover:bg-slate-800/80 text-left transition';
+    pccTabBtn.onclick = () => window.switchTab('pcc');
+    pccTabBtn.innerHTML = `<i class="fa-solid fa-industry text-lg text-orange-400"></i><div><div class="text-xs font-bold uppercase tracking-wider">7. Plant PCC</div><div class="text-[11px] opacity-80">Trafo, DG &amp; ACB</div></div>`;
+    mainTabBar.appendChild(pccTabBtn);
+  }
+
+  const leftCol = document.querySelector('.lg\\:col-span-7');
+  if (leftCol && !document.getElementById('panel-pcc')) {
+    const pccSection = document.createElement('section');
+    pccSection.id = 'panel-pcc';
+    pccSection.className = 'calc-panel hidden space-y-4';
+    pccSection.innerHTML = `
+      <div class="border-b border-slate-800 pb-3"><h2 class="text-lg font-bold text-white flex items-center gap-2"><i class="fa-solid fa-industry text-orange-400"></i> Plant Transformer, DG Set &amp; Main PCC Incomer Sizing</h2><p class="text-xs text-slate-400 mt-0.5">Greenfield plant sizing for Distribution Transformer (kVA), backup DG set, Main ACB/MCCB incomer and indicative short-circuit fault level (kA).</p></div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div><label class="block text-xs font-semibold text-slate-300 mb-1" for="pcc-kw">Total Connected Plant Load (kW)</label><input type="number" id="pcc-kw" value="450" min="25" step="25" oninput="calculatePcc()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" /></div>
+        <div><label class="block text-xs font-semibold text-slate-300 mb-1" for="pcc-df">Plant Diversity / Demand Factor</label><select id="pcc-df" onchange="calculatePcc()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white"><option value="0.70">0.70 (Batch Process / General Machine Shop)</option><option value="0.80" selected>0.80 (Standard Continuous Manufacturing)</option><option value="0.90">0.90 (Heavy Process / Chemical / Automation Plant)</option></select></div>
+        <div><label class="block text-xs font-semibold text-slate-300 mb-1" for="pcc-exp">Future Expansion Margin</label><select id="pcc-exp" onchange="calculatePcc()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white"><option value="1.15">15% Future Load Margin</option><option value="1.25" selected>25% Future Load Margin (Recommended)</option><option value="1.40">40% Future Phase-2 Expansion</option></select></div>
+        <div><label class="block text-xs font-semibold text-slate-300 mb-1" for="pcc-z">Transformer % Impedance (%Z)</label><select id="pcc-z" onchange="calculatePcc()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white"><option value="4.5">4.50% (Up to 630 kVA IS 1180)</option><option value="5.0" selected>5.00% (800–1250 kVA Standard)</option><option value="6.25">6.25% (1600–2500 kVA Heavy Duty)</option></select></div>
+      </div>`;
+    leftCol.appendChild(pccSection);
+  }
+
+  // Add header actions where the existing header action group is present.
+  const headerBtnGroup = document.querySelector('header .flex.items-center.gap-2:last-child');
+  if (headerBtnGroup && !document.getElementById('phase3AuditBtn')) {
+    const auditBtn = document.createElement('button');
+    auditBtn.id = 'phase3AuditBtn'; auditBtn.onclick = () => window.openAuditModal();
+    auditBtn.className = 'text-xs bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-semibold px-3 py-2 rounded-lg transition flex items-center gap-1.5';
+    auditBtn.innerHTML = `<i class="fa-solid fa-ear-listen"></i> Book Free Site Audit`;
+    headerBtnGroup.insertBefore(auditBtn, headerBtnGroup.firstChild);
+    const qrBtn = document.createElement('button');
+    qrBtn.id = 'phase3QrBtn'; qrBtn.onclick = () => window.toggleQrModal(); qrBtn.title = 'Show App QR Code';
+    qrBtn.className = 'text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-2.5 py-2 rounded-lg transition';
+    qrBtn.innerHTML = `<i class="fa-solid fa-qrcode text-cyan-400"></i>`;
+    headerBtnGroup.appendChild(qrBtn);
+  }
+
+  // Live indicative CAPEX card in the existing CTA area.
+  const ctaBox = document.querySelector('.border-t.border-slate-800.pt-4.space-y-2\\.5');
+  if (ctaBox && !document.getElementById('phase3CapexCard')) {
+    const capexCard = document.createElement('div'); capexCard.id = 'phase3CapexCard';
+    capexCard.className = 'bg-gradient-to-r from-emerald-950/60 to-slate-900 border border-emerald-600/40 rounded-xl p-3.5 mb-2';
+    capexCard.innerHTML = `<div class="flex flex-wrap items-center justify-between gap-2 mb-2"><span class="text-[11px] font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5"><i class="fa-solid fa-tags"></i> Budgetary Capex Estimator (Ex-Works Pune)</span><select id="makeTierSelect" onchange="updateBudgetaryCapex()" class="bg-slate-950 border border-slate-700 rounded-md px-2 py-1 text-[11px] text-slate-200 font-semibold outline-none"><option value="1.0" selected>Make: L&amp;T / C&amp;S / Havells</option><option value="1.18">Make: Schneider / Siemens / ABB</option></select></div><div class="flex items-baseline justify-between gap-2"><div><div id="capexRangeText" class="text-lg sm:text-xl font-extrabold text-white">₹ --</div><div class="text-[10px] text-slate-400">Indicative estimate only; final scope, ratings, taxes and installation to be confirmed.</div></div><button type="button" onclick="openLeadModal('Lock Factory-Direct Offer &amp; Formal Quote')" class="text-[11px] bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-2.5 py-1.5 rounded-lg shadow transition shrink-0">Get Exact Price →</button></div>`;
+    ctaBox.insertBefore(capexCard, ctaBox.firstChild);
+  }
+
+  window.calculatePcc = function() {
+    const get = id => document.getElementById(id);
+    const kw = Math.max(0, parseFloat(get('pcc-kw')?.value) || 450);
+    const df = parseFloat(get('pcc-df')?.value) || 0.80;
+    const exp = parseFloat(get('pcc-exp')?.value) || 1.25;
+    const zPct = parseFloat(get('pcc-z')?.value) || 5.0;
+    const designKw = kw * df * exp;
+    const reqKva = designKw / (0.85 * 0.85);
+    const stdTrafo = [100,160,200,250,315,400,500,630,800,1000,1250,1600,2000,2500];
+    const selectedTrafo = stdTrafo.find(t => t >= reqKva) || 2500;
+    const stdDg = [62.5,82.5,100,125,160,200,250,320,380,500,625,750,1010,1500];
+    const selectedDg = stdDg.find(d => d >= (kw * df) / 0.8) || 1500;
+    const trafoFlc = Math.round((selectedTrafo * 1000) / (1.732 * 415));
+    const stdIncomers = [250,400,630,800,1000,1250,1600,2000,2500,3200,4000];
+    const incomerAmps = stdIncomers.find(a => a >= trafoFlc * 1.15) || 4000;
+    const breakerType = incomerAmps >= 800 ? '4P EDO Air Circuit Breaker (ACB)' : '4P Microprocessor MCCB';
+    const faultKa = ((trafoFlc / (zPct / 100)) / 1000).toFixed(1);
+    const faultNum = Number(faultKa);
+    const stdFaultRating = faultNum > 50 ? '65 kA for 1 sec' : (faultNum > 35 ? '50 kA for 1 sec' : '36 kA for 1 sec');
+    currentState = {
+      calculator: 'Plant Transformer, DG Set & Main PCC Sizer',
+      inputsSummary: `Connected Load: ${kw}kW | Diversity: ${df} | Expansion: ${Math.round((exp-1)*100)}% | %Z: ${zPct}%`,
+      primaryLabel: 'Recommended Main Plant PCC & Substation Spec',
+      primaryValue: `${selectedTrafo} kVA Trafo + ${incomerAmps}A PCC`,
+      primarySub: `Main Incomer: ${incomerAmps}A ${breakerType} (${stdFaultRating})`,
+      metrics: [
+        {label:'Design Maximum Demand Load',value:`${designKw.toFixed(0)} kW (with Expansion Margin)`},
+        {label:'Distribution Transformer Rating (11kV/433V)',value:`${selectedTrafo} kVA ONAN Copper Wound (FLC: ${trafoFlc}A)`},
+        {label:'Recommended Backup DG Set & Bus Coupler',value:`${selectedDg} kVA DG Set + Interlocked Auto AMF / Bus Coupler`},
+        {label:'Prospective Short-Circuit Fault Level',value:`${faultKa} kA RMS (select ${stdFaultRating} switchgear)`},
+        {label:'Recommended Main PCC Busbar (preliminary)',value:incomerAmps >= 1600 ? '2 Runs × 100×10 mm E.C. Copper' : '1 Run × 80×10 mm E.C. Copper'}
+      ]
+    };
+    window.renderOutput();
+  };
+
+  window.updateBudgetaryCapex = function() {
+    const el = document.getElementById('capexRangeText'), tierEl = document.getElementById('makeTierSelect');
+    if (!el || !tierEl) return;
+    const mult = parseFloat(tierEl.value) || 1;
+    const calc = (typeof currentState !== 'undefined' && currentState.calculator) || '';
+    const val = (typeof currentState !== 'undefined' && currentState.primaryValue) || '';
+    let baseRs = 65000;
+    if (calc.includes('Plant Transformer')) {
+      const ampsMatch = ((currentState.primarySub || '').match(/(\d+)A/)); const amps = ampsMatch ? parseInt(ampsMatch[1],10) : 800; baseRs = amps * 420;
+    } else if (calc.includes('Multi-Feeder')) { const m=val.match(/(\d+)/); baseRs=(m?parseInt(m[1],10):5)*36000;
+    } else if (calc.includes('PLC')) { const m=val.match(/(\d+)/); baseRs=115000+((m?parseInt(m[1],10):6)*22000);
+    } else if (calc.includes('APFC')) { const m=val.match(/(\d+)/); baseRs=(m?parseInt(m[1],10):100)*2150;
+    } else if (calc.includes('Busbar')) { const m=((currentState.inputsSummary||'').match(/(\d+)A/)); baseRs=85000+((m?parseInt(m[1],10):630)*145);
+    } else if (calc.includes('Motor')) { const m=val.match(/([\d.]+)/); baseRs=18500+((m?parseFloat(m[1]):30)*650);
+    } else if (calc.includes('Cooling')) baseRs=val.includes('AC')?68000:14500;
+    const low=Math.round((baseRs*mult*0.92)/1000)*1000, high=Math.round((baseRs*mult*1.12)/1000)*1000;
+    const makeLabel=mult>1.05?'Schneider/Siemens/ABB':'L&T/C&S/Havells';
+    el.textContent=`₹ ${low.toLocaleString('en-IN')} – ₹ ${high.toLocaleString('en-IN')}`;
+    if (typeof currentState !== 'undefined') currentState.budgetaryCapex=`${el.textContent} (${makeLabel})`;
+  };
+
+  window.openAuditModal = function() {
+    currentState = {calculator:'Free Factory Electrical, Harmonic & PLC Site Audit',inputsSummary:'On-Site Power Quality, APFC ROI, Panel Thermography & PLC Retrofit Assessment',primaryLabel:'Booked Engineering Service',primaryValue:'Free On-Site Engineering Audit',primarySub:'For Chakan, Bhosari, Ranjangaon, Talegaon, Pimpri-Chinchwad & Maharashtra MIDCs',metrics:[
+      {label:'Power Factor & Harmonic Study',value:'MSEDCL kVAh Bill Penalty Elimination Check'},
+      {label:'Control Panel Safety & Thermal Check',value:'Hotspot & Busbar Loading Inspection'},
+      {label:'Automation & PLC Retrofit Assessment',value:'Cycle-Time Reduction & OEE Improvement'}
+    ]};
+    window.renderOutput(); window.openLeadModal('Book Free MIDC Factory Audit');
+  };
+  window.toggleQrModal = function() {
+    const modal=document.getElementById('qrShareModal'), img=document.getElementById('qrCodeImg');
+    if (!modal || !img) return;
+    if (!img.dataset.generated) { img.src=`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(window.location.href)}`; img.dataset.generated='1'; }
+    modal.classList.toggle('hidden'); modal.classList.toggle('flex');
+  };
+  const prevSwitch = window.switchTab;
+  if (typeof prevSwitch === 'function') window.switchTab = function(tabId) { prevSwitch(tabId); if (tabId === 'pcc') window.calculatePcc(); };
+  const prevRender = window.renderOutput;
+  if (typeof prevRender === 'function') window.renderOutput = function() { prevRender(); window.updateBudgetaryCapex(); };
+  setTimeout(() => window.updateBudgetaryCapex(), 250);
+})();
+</script>
+
 </body>
 </html>
