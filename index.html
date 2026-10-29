@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Industrial Electrical & PLC Toolkit | Aryavarta Automation</title>
+  <meta name="description" content="Free Industrial Electrical Panel, Busbar, Cable, Motor Starter & Thermal Calculator by Aryavarta Automation, Pune." />
+  <meta name="theme-color" content="#0f172a" />
+  <link rel="manifest" href="manifest.json" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .tab-active {
+      background-color: #2563eb;
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+    }
+    /* Printable Spec Sheet Styling */
+    @media print {
+      body * { visibility: hidden; }
+      #printableSpecSheet, #printableSpecSheet * { visibility: visible; }
+      #printableSpecSheet {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        display: block !important;
+      }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col">
+
+  <!-- Top Branding Header -->
+  <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-30 no-print">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center font-extrabold text-xl text-white shadow">
+          AA
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-bold text-base sm:text-lg tracking-tight text-white">Aryavarta Automation</h1>
+            <span class="text-[11px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full font-semibold">PRO TOOLKIT</span>
+          </div>
+          <p class="text-xs text-slate-400">Industrial Electrical, Control Panel & PLC Consultant Utility (IS / IEC 61439)</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="installPwaBtn" class="hidden text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3 py-2 rounded-lg transition flex items-center gap-1.5">
+          <i class="fa-solid fa-download"></i> Install App
+        </button>
+        <a href="https://www.aryavartaautomation.in/" target="_blank" rel="noopener" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-2 rounded-lg transition flex items-center gap-1.5">
+          <i class="fa-solid fa-globe text-blue-400"></i> Official Website
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Workspace -->
+  <main class="max-w-6xl mx-auto w-full px-4 py-6 flex-1 no-print">
+
+    <!-- Calculator Navigation Tabs -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 mb-6">
+      <button onclick="switchTab('busbar')" id="tab-busbar" class="tab-btn tab-active flex items-center gap-2.5 p-3 rounded-xl border border-slate-800 bg-slate-900 text-left transition">
+        <i class="fa-solid fa-grip-lines text-lg"></i>
+        <div>
+          <div class="text-xs font-bold uppercase tracking-wider">1. Busbar Sizing</div>
+          <div class="text-[11px] opacity-80">Cu vs Al & Derating</div>
+        </div>
+      </button>
+      <button onclick="switchTab('cable')" id="tab-cable" class="tab-btn flex items-center gap-2.5 p-3 rounded-xl border border-slate-800 bg-slate-900 text-slate-300 hover:bg-slate-800/80 text-left transition">
+        <i class="fa-solid fa-bolt text-lg text-amber-400"></i>
+        <div>
+          <div class="text-xs font-bold uppercase tracking-wider">2. Cable & V-Drop</div>
+          <div class="text-[11px] opacity-80">Sq.mm & Voltage Drop</div>
+        </div>
+      </button>
+      <button onclick="switchTab('motor')" id="tab-motor" class="tab-btn flex items-center gap-2.5 p-3 rounded-xl border border-slate-800 bg-slate-900 text-slate-300 hover:bg-slate-800/80 text-left transition">
+        <i class="fa-solid fa-gears text-lg text-emerald-400"></i>
+        <div>
+          <div class="text-xs font-bold uppercase tracking-wider">3. Motor Starter</div>
+          <div class="text-[11px] opacity-80">DOL / Star-Delta / VFD</div>
+        </div>
+      </button>
+      <button onclick="switchTab('thermal')" id="tab-thermal" class="tab-btn flex items-center gap-2.5 p-3 rounded-xl border border-slate-800 bg-slate-900 text-slate-300 hover:bg-slate-800/80 text-left transition">
+        <i class="fa-solid fa-temperature-arrow-up text-lg text-rose-400"></i>
+        <div>
+          <div class="text-xs font-bold uppercase tracking-wider">4. Panel Thermal</div>
+          <div class="text-[11px] opacity-80">Heat & Cooling Fan / AC</div>
+        </div>
+      </button>
+    </div>
+
+    <!-- Calculator Grid: Left Input Panel, Right Engineering Output & Lead Hook -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+      <!-- LEFT COLUMN: INPUT FORMS -->
+      <div class="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xl">
+
+        <!-- 1. BUSBAR CALCULATOR -->
+        <section id="panel-busbar" class="calc-panel space-y-4">
+          <div class="border-b border-slate-800 pb-3">
+            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-grip-lines text-blue-400"></i> Busbar Size & Current Capacity Calculator
+            </h2>
+            <p class="text-xs text-slate-400 mt-0.5">Sizes main PCC/MCC busbars with enclosure, ambient temperature, and parallel-run derating factors.</p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Required Current (Amps)</label>
+              <input type="number" id="bb-current" value="630" min="10" oninput="calculateBusbar()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-blue-500 outline-none" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Busbar Material</label>
+              <select id="bb-material" onchange="calculateBusbar()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-blue-500 outline-none">
+                <option value="Cu">Electrolytic Copper (E.C. Grade)</option>
+                <option value="Al">Aluminum Alloy (E91E Grade)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Ambient Temperature (°C)</label>
+              <select id="bb-ambient" onchange="calculateBusbar()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-blue-500 outline-none">
+                <option value="1.05">35°C (Standard Indoor)</option>
+                <option value="1.00" selected>40°C (IS Standard Reference)</option>
+                <option value="0.94">45°C (Hot Factory Shopfloor)</option>
+                <option value="0.87">50°C (High Ambient / Furnace Area)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Surface & Enclosure Factor</label>
+              <select id="bb-surface" onchange="calculateBusbar()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-blue-500 outline-none">
+                <option value="0.95" selected>Heat-Shrink Sleeved / Enclosed IP54</option>
+                <option value="1.00">Black Matt Painted (High Emissivity)</option>
+                <option value="0.85">Bare Unpainted inside IP65 Panel</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Short-Circuit Fault Level (kA for 1s)</label>
+              <select id="bb-fault" onchange="calculateBusbar()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-blue-500 outline-none">
+                <option value="15">15 kA / 1 sec</option>
+                <option value="25">25 kA / 1 sec</option>
+                <option value="35" selected>35 kA / 1 sec</option>
+                <option value="50">50 kA / 1 sec</option>
+                <option value="65">65 kA / 1 sec</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Preferred Runs per Phase</label>
+              <select id="bb-runs" onchange="calculateBusbar()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-blue-500 outline-none">
+                <option value="auto" selected>Auto-Select Best Economy</option>
+                <option value="1">1 Run per Phase</option>
+                <option value="2">2 Runs per Phase</option>
+                <option value="3">3 Runs per Phase</option>
+                <option value="4">4 Runs per Phase</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <!-- 2. CABLE & VOLTAGE DROP CALCULATOR -->
+        <section id="panel-cable" class="calc-panel hidden space-y-4">
+          <div class="border-b border-slate-800 pb-3">
+            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-bolt text-amber-400"></i> Cable Size & Voltage Drop Calculator
+            </h2>
+            <p class="text-xs text-slate-400 mt-0.5">Selects 1.1kV Armoured XLPE/PVC cable size based on both continuous ampacity and voltage drop limit.</p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Supply System</label>
+              <select id="cb-system" onchange="calculateCable()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
+                <option value="3ph" selected>3-Phase 415V AC (50Hz)</option>
+                <option value="1ph">1-Phase 240V AC (50Hz)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Load Power (kW)</label>
+              <input type="number" id="cb-kw" value="45" min="0.5" step="0.5" oninput="calculateCable()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Conductor & Insulation</label>
+              <select id="cb-type" onchange="calculateCable()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
+                <option value="Al-XLPE" selected>Aluminum Armoured XLPE (2XWY)</option>
+                <option value="Cu-XLPE">Copper Armoured XLPE (2XWY)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Cable Route Length (Meters)</label>
+              <input type="number" id="cb-length" value="120" min="1" oninput="calculateCable()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Power Factor (cos φ)</label>
+              <input type="number" id="cb-pf" value="0.85" min="0.5" max="1.0" step="0.01" oninput="calculateCable()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Installation & Max Voltage Drop</label>
+              <select id="cb-vdrop-limit" onchange="calculateCable()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
+                <option value="3">Max 3% V-Drop (Main PCC / Sub-Board)</option>
+                <option value="5" selected>Max 5% V-Drop (Industrial Motor Feeder)</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <!-- 3. MOTOR STARTER SELECTOR -->
+        <section id="panel-motor" class="calc-panel hidden space-y-4">
+          <div class="border-b border-slate-800 pb-3">
+            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-gears text-emerald-400"></i> Motor Starter, Contactor & Relay Selector
+            </h2>
+            <p class="text-xs text-slate-400 mt-0.5">Type-2 coordination sizing for 3-Phase 415V squirrel-cage induction motors (DOL, Star-Delta, VFD).</p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Motor Power Value</label>
+              <input type="number" id="mt-power" value="15" min="0.37" step="0.5" oninput="calculateMotor()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Rating Unit</label>
+              <select id="mt-unit" onchange="calculateMotor()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
+                <option value="kW" selected>Kilowatts (kW)</option>
+                <option value="HP">Horsepower (HP)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Starter Configuration</label>
+              <select id="mt-starter" onchange="calculateMotor()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
+                <option value="DOL">Direct On-Line (DOL Starter)</option>
+                <option value="ASD" selected>Automatic Star-Delta (ASD Starter)</option>
+                <option value="VFD">VFD / AC Drive Panel Feeder</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Motor Efficiency & Duty</label>
+              <select id="mt-eff" onchange="calculateMotor()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
+                <option value="0.91" selected>IE3 Premium Efficiency (~91%)</option>
+                <option value="0.88">IE2 Standard Efficiency (~88%)</option>
+                <option value="0.94">IE4 Super Premium (~94%)</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <!-- 4. ENCLOSURE THERMAL & COOLING CALCULATOR -->
+        <section id="panel-thermal" class="calc-panel hidden space-y-4">
+          <div class="border-b border-slate-800 pb-3">
+            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-temperature-arrow-up text-rose-400"></i> Panel Heat Dissipation & Cooling Calculator
+            </h2>
+            <p class="text-xs text-slate-400 mt-0.5">IEC 60890 thermal modeling for PLC, VFD, and MCC panels to size Filter Fans or Panel ACs.</p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Height (mm)</label>
+              <input type="number" id="th-h" value="2100" min="300" step="100" oninput="calculateThermal()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Width (mm)</label>
+              <input type="number" id="th-w" value="1000" min="300" step="100" oninput="calculateThermal()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Depth (mm)</label>
+              <input type="number" id="th-d" value="600" min="200" step="50" oninput="calculateThermal()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Internal Heat Loss (Watts)</label>
+              <input type="number" id="th-watts" value="650" min="20" step="25" oninput="calculateThermal()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" />
+              <span class="text-[11px] text-slate-400">Tip: VFD heat loss is approx. 3% of VFD kW rating (e.g. 22kW VFD ≈ 660W).</span>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Panel Mounting Type</label>
+              <select id="th-mount" onchange="calculateThermal()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
+                <option value="free">Free-Standing Single Panel (All sides open)</option>
+                <option value="wall" selected>Floor/Wall Mounted (Back against wall)</option>
+                <option value="suite">Middle of Panel Line-up (Both sides blocked)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Max Shopfloor Ambient Temp (°C)</label>
+              <input type="number" id="th-amb" value="38" min="20" max="55" oninput="calculateThermal()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Max Allowable Internal Temp (°C)</label>
+              <input type="number" id="th-max" value="48" min="30" max="65" oninput="calculateThermal()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" />
+            </div>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- RIGHT COLUMN: LIVE RESULTS + VIRAL LEAD CONVERSION HOOK -->
+      <div class="lg:col-span-5 flex flex-col justify-between bg-gradient-to-b from-slate-900 to-slate-950 border border-blue-500/30 rounded-2xl p-5 sm:p-6 shadow-2xl">
+        <div>
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+            <div>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-blue-400">Engineering Output</span>
+              <h3 id="res-title" class="text-base font-bold text-white">Recommended Specification</h3>
+            </div>
+            <span class="text-xs bg-blue-950 text-blue-300 border border-blue-800 px-2.5 py-1 rounded-md font-mono">415V / 50Hz</span>
+          </div>
+
+          <!-- Primary Highlight Result -->
+          <div class="bg-slate-950/90 border border-slate-800 rounded-xl p-4 mb-4">
+            <div class="text-xs text-slate-400 mb-1" id="res-primary-label">Selected Rating</div>
+            <div class="text-2xl sm:text-3xl font-extrabold text-amber-400 tracking-tight" id="res-primary-value">--</div>
+            <div class="text-xs text-emerald-400 mt-1 font-medium" id="res-primary-sub">--</div>
+          </div>
+
+          <!-- Technical Breakdown List -->
+          <div id="res-metrics" class="space-y-2.5 text-sm mb-6">
+            <!-- Populated dynamically via JS -->
+          </div>
+        </div>
+
+        <!-- THE MIND-BLOWING HOOK: QUOTE & SPEC SHEET CTAs -->
+        <div class="border-t border-slate-800 pt-4 space-y-2.5">
+          <div class="bg-blue-950/40 border border-blue-800/60 rounded-xl p-3 mb-2">
+            <p class="text-xs text-blue-200 font-medium leading-relaxed">
+              <i class="fa-solid fa-wand-magic-sparkles text-amber-400 mr-1"></i>
+              <strong>Need this panel built or tendered?</strong> Convert this exact calculation into an official Aryavarta Automation budgetary quote or tender spec sheet.
+            </p>
+          </div>
+
+          <button onclick="openLeadModal('Official Aryavarta Panel Quote')" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-blue-600/30 transition flex items-center justify-center gap-2 text-sm">
+            <i class="fa-solid fa-file-invoice-dollar"></i>
+            Convert into Official Aryavarta Panel Quote
+          </button>
+
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="openLeadModal('Download Spec Sheet PDF')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold py-2.5 px-3 rounded-xl transition flex items-center justify-center gap-1.5 text-xs">
+              <i class="fa-solid fa-file-pdf text-rose-400"></i> Download Spec Sheet
+            </button>
+            <button onclick="shareToolkitWhatsApp()" class="bg-emerald-950/60 hover:bg-emerald-900/70 text-emerald-300 border border-emerald-700/50 font-semibold py-2.5 px-3 rounded-xl transition flex items-center justify-center gap-1.5 text-xs">
+              <i class="fa-brands fa-whatsapp text-emerald-400 text-sm"></i> Share with Engineer
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- LEAD CAPTURE MODAL (STORES TO GOOGLE SHEETS) -->
+  <div id="leadModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden items-center justify-center p-4 no-print">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+      <button onclick="closeLeadModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+
+      <div class="flex items-center gap-2.5 mb-2">
+        <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-white text-sm">AA</div>
+        <h3 id="modalTitle" class="text-base font-bold text-white">Convert to Official Aryavarta Quote</h3>
+      </div>
+      <p class="text-xs text-slate-400 mb-4">
+        Your calculation specs are attached automatically. Enter your details below to receive the official tender quote / spec sheet from Aryavarta Automation, Pune.
+      </p>
+
+      <form id="leadForm" onsubmit="submitLeadToGoogleSheets(event)" class="space-y-3">
+        <input type="hidden" id="leadActionType" value="Official Aryavarta Panel Quote" />
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Your Name *</label>
+          <input type="text" id="leadName" required placeholder="Er. Rajesh Patil" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Company / Consultancy Name *</label>
+          <input type="text" id="leadCompany" required placeholder="Apex Industrial Consultants Pvt Ltd" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" />
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">WhatsApp / Mobile *</label>
+            <input type="tel" id="leadPhone" required placeholder="+91 98XXXXXXXX" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Work Email</label>
+            <input type="email" id="leadEmail" placeholder="name@company.com" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Project Site / MIDC Location & Notes</label>
+          <input type="text" id="leadLocation" placeholder="e.g., Chakan MIDC / Bhosari / Panel GA & BOM Enquiry" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" />
+        </div>
+
+        <!-- Attached Spec Preview -->
+        <div class="bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-[11px] text-slate-300 font-mono">
+          <div class="text-blue-400 font-semibold mb-0.5">Attached Engineering Calculation:</div>
+          <div id="modalSpecPreview" class="truncate"></div>
+        </div>
+
+        <button type="submit" id="submitLeadBtn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 px-4 rounded-xl transition flex items-center justify-center gap-2 text-sm">
+          <i class="fa-solid fa-paper-plane"></i> Submit & Generate Specification
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- PRINTABLE A4 ENGINEERING SPEC SHEET (HIDDEN ON SCREEN, VISIBLE ON PRINT/PDF) -->
+  <div id="printableSpecSheet" class="hidden p-8 text-black bg-white">
+    <div style="border-bottom: 3px solid #1e3a8a; padding-bottom: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <h1 style="font-size: 22px; font-weight: 800; color: #0f172a; margin: 0;">ARYAVARTA AUTOMATION</h1>
+        <p style="font-size: 12px; color: #475569; margin: 2px 0 0 0;">Industrial Control Panels, PLC/SCADA Automation, PCC, MCC, VFD & APFC Turnkey Solutions</p>
+        <p style="font-size: 11px; color: #2563eb; margin: 2px 0 0 0;">Web: www.aryavartaautomation.in | Location: Pune, Maharashtra</p>
+      </div>
+      <div style="text-align: right; font-size: 11px; color: #334155;">
+        <div id="printDate"></div>
+        <div id="printRef" style="font-weight: 700; color: #1e3a8a;"></div>
+      </div>
+    </div>
+
+    <h2 id="printCalcTitle" style="font-size: 16px; font-weight: 700; background: #f1f5f9; padding: 8px 12px; border-left: 4px solid #2563eb; margin-bottom: 16px;"></h2>
+
+    <div style="margin-bottom: 16px; font-size: 12px;" id="printClientInfo"></div>
+
+    <table style="width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 20px;">
+      <thead>
+        <tr style="background: #e2e8f0; text-align: left;">
+          <th style="padding: 8px; border: 1px solid #cbd5e1;">Engineering Parameter</th>
+          <th style="padding: 8px; border: 1px solid #cbd5e1;">Calculated Value / Specification</th>
+        </tr>
+      </thead>
+      <tbody id="printTableBody"></tbody>
+    </table>
+
+    <div style="border: 1px solid #94a3b8; background: #f8fafc; padding: 12px; font-size: 11px; color: #334155;">
+      <strong>Manufacturer Note:</strong> This technical sizing sheet is generated via the Aryavarta Automation Consultant Engineering Utility in accordance with general IS / IEC 61439 guidelines. Contact Aryavarta Automation for certified GA drawings, EPLAN schematics, and final factory-tested panel quotations.
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bg-slate-900 border-t border-slate-800 py-4 text-center text-xs text-slate-400 no-print">
+    <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+      <div>© 2026 <strong>Aryavarta Automation</strong> (Pune, MH). Built for Electrical Consultants & Project Engineers.</div>
+      <a href="https://www.aryavartaautomation.in/" target="_blank" class="text-blue-400 hover:underline">www.aryavartaautomation.in</a>
+    </div>
+  </footer>
+
+  <!-- APPLICATION LOGIC -->
+  <script>
+    // ============================================================================
+    // CONFIGURATION: PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL BELOW
+    // ============================================================================
+    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwW8x3bpgYxJtOe78EyGywloWpKdzfJPUJPPzP1bJphmTtUZapGfX-Cw_zYuDGTO993sw/exec';
+    const COMPANY_WHATSAPP = '9322476735'; // Replace with Aryavarta official WhatsApp with country code (91)
+
+    let currentState = {
+      calculator: 'Busbar Sizing & Ampacity Calculator',
+      inputsSummary: '',
+      primaryLabel: '',
+      primaryValue: '',
+      primarySub: '',
+      metrics: []
+    };
+
+    // Standard Busbar Library (Width x Thickness in mm, Area in sq.mm, Base Free-Air Cu Ampacity, Al Ampacity)
+    const BUSBAR_TABLE = [
+      { size: '25 x 3 mm', area: 75, cu: 200, al: 130 },
+      { size: '25 x 6 mm', area: 150, cu: 315, al: 205 },
+      { size: '30 x 6 mm', area: 180, cu: 370, al: 240 },
+      { size: '40 x 6 mm', area: 240, cu: 475, al: 310 },
+      { size: '40 x 10 mm', area: 400, cu: 670, al: 435 },
+      { size: '50 x 6 mm', area: 300, cu: 580, al: 380 },
+      { size: '50 x 10 mm', area: 500, cu: 820, al: 530 },
+      { size: '60 x 10 mm', area: 600, cu: 960, al: 625 },
+      { size: '80 x 10 mm', area: 800, cu: 1240, al: 805 },
+      { size: '100 x 10 mm', area: 1000, cu: 1510, al: 980 },
+      { size: '120 x 10 mm', area: 1200, cu: 1780, al: 1155 }
+    ];
+
+    // Standard 1.1kV XLPE Armoured Cable Library (sq.mm, Al Ampacity, Cu Ampacity, R ohm/km Al, R ohm/km Cu, X ohm/km, Gland Size)
+    const CABLE_TABLE = [
+      { sqmm: 2.5, alAmp: 24, cuAmp: 33, rAl: 12.1, rCu: 7.41, x: 0.095, gland: '20mm (S)' },
+      { sqmm: 4, alAmp: 31, cuAmp: 43, rAl: 7.41, rCu: 4.61, x: 0.092, gland: '20mm (S)' },
+      { sqmm: 6, alAmp: 39, cuAmp: 54, rAl: 4.61, rCu: 3.08, x: 0.090, gland: '20mm (M)' },
+      { sqmm: 10, alAmp: 52, cuAmp: 73, rAl: 3.08, rCu: 1.83, x: 0.086, gland: '20mm (L)' },
+      { sqmm: 16, alAmp: 68, cuAmp: 95, rAl: 1.91, rCu: 1.15, x: 0.083, gland: '25mm (S)' },
+      { sqmm: 25, alAmp: 89, cuAmp: 125, rAl: 1.20, rCu: 0.727, x: 0.081, gland: '25mm (L)' },
+      { sqmm: 35, alAmp: 108, cuAmp: 152, rAl: 0.868, rCu: 0.524, x: 0.079, gland: '32mm (M)' },
+      { sqmm: 50, alAmp: 130, cuAmp: 182, rAl: 0.641, rCu: 0.387, x: 0.078, gland: '32mm (L)' },
+      { sqmm: 70, alAmp: 162, cuAmp: 225, rAl: 0.443, rCu: 0.268, x: 0.076, gland: '38mm (M)' },
+      { sqmm: 95, alAmp: 197, cuAmp: 273, rAl: 0.320, rCu: 0.193, x: 0.075, gland: '45mm (M)' },
+      { sqmm: 120, alAmp: 226, cuAmp: 312, rAl: 0.253, rCu: 0.153, x: 0.074, gland: '50mm (S)' },
+      { sqmm: 150, alAmp: 256, cuAmp: 355, rAl: 0.206, rCu: 0.124, x: 0.073, gland: '50mm (L)' },
+      { sqmm: 185, alAmp: 294, cuAmp: 405, rAl: 0.164, rCu: 0.099, x: 0.073, gland: '57mm (M)' },
+      { sqmm: 240, alAmp: 346, cuAmp: 475, rAl: 0.125, rCu: 0.075, x: 0.072, gland: '63mm (L)' },
+      { sqmm: 300, alAmp: 396, cuAmp: 540, rAl: 0.100, rCu: 0.060, x: 0.072, gland: '75mm (M)' },
+      { sqmm: 400, alAmp: 455, cuAmp: 620, rAl: 0.0778, rCu: 0.047, x: 0.071, gland: '82mm (L)' }
+    ];
+
+    const STANDARD_CONTACTORS = [9, 12, 18, 25, 32, 40, 50, 65, 80, 95, 115, 150, 185, 225, 265, 330, 400, 500, 630];
+    const STANDARD_MCCB = [16, 25, 32, 40, 50, 63, 80, 100, 125, 160, 200, 250, 315, 400, 500, 630, 800];
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.calc-panel').forEach(el => el.classList.add('hidden'));
+      document.getElementById('panel-' + tabId).classList.remove('hidden');
+
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('tab-active');
+        btn.classList.add('text-slate-300');
+      });
+      const activeBtn = document.getElementById('tab-' + tabId);
+      activeBtn.classList.add('tab-active');
+      activeBtn.classList.remove('text-slate-300');
+
+      if (tabId === 'busbar') calculateBusbar();
+      if (tabId === 'cable') calculateCable();
+      if (tabId === 'motor') calculateMotor();
+      if (tabId === 'thermal') calculateThermal();
+    }
+
+    function renderOutput() {
+      document.getElementById('res-title').textContent = currentState.calculator;
+      document.getElementById('res-primary-label').textContent = currentState.primaryLabel;
+      document.getElementById('res-primary-value').textContent = currentState.primaryValue;
+      document.getElementById('res-primary-sub').textContent = currentState.primarySub;
+
+      const container = document.getElementById('res-metrics');
+      container.innerHTML = currentState.metrics.map(m => `
+        <div class="flex items-center justify-between border-b border-slate-800/70 pb-2">
+          <span class="text-slate-400 text-xs">${m.label}</span>
+          <span class="font-semibold text-slate-100 text-xs sm:text-sm text-right">${m.value}</span>
+        </div>
+      `).join('');
+    }
+
+    // 1. BUSBAR SIZING ENGINE
+    function calculateBusbar() {
+      const reqAmps = parseFloat(document.getElementById('bb-current').value) || 100;
+      const mat = document.getElementById('bb-material').value;
+      const kTemp = parseFloat(document.getElementById('bb-ambient').value);
+      const kSurf = parseFloat(document.getElementById('bb-surface').value);
+      const faultKa = parseFloat(document.getElementById('bb-fault').value);
+      const prefRuns = document.getElementById('bb-runs').value;
+
+      // Adiabatic short-circuit constant k (IEC 60865: Cu = 143, Al = 94)
+      const kFault = mat === 'Cu' ? 143 : 94;
+      const minFaultArea = Math.ceil((faultKa * 1000) / kFault);
+
+      // Multi-run proximity derating factors
+      const runFactors = { 1: 1.0, 2: 1.72, 3: 2.25, 4: 2.70 };
+      const runsToTest = prefRuns === 'auto' ? [1, 2, 3, 4] : [parseInt(prefRuns)];
+
+      let chosen = null;
+
+      for (let r of runsToTest) {
+        for (let b of BUSBAR_TABLE) {
+          const baseAmp = mat === 'Cu' ? b.cu : b.al;
+          const deratedCap = Math.round(baseAmp * runFactors[r] * kTemp * kSurf);
+          const totalArea = b.area * r;
+          if (deratedCap >= reqAmps && totalArea >= minFaultArea) {
+            chosen = { runs: r, bar: b, cap: deratedCap, totalArea: totalArea };
+            break;
+          }
+        }
+        if (chosen) break;
+      }
+
+      if (!chosen) {
+        const maxBar = BUSBAR_TABLE[BUSBAR_TABLE.length - 1];
+        const baseAmp = mat === 'Cu' ? maxBar.cu : maxBar.al;
+        chosen = {
+          runs: 4,
+          bar: maxBar,
+          cap: Math.round(baseAmp * runFactors[4] * kTemp * kSurf),
+          totalArea: maxBar.area * 4
+        };
+      }
+
+      const density = (reqAmps / chosen.totalArea).toFixed(2);
+      const matName = mat === 'Cu' ? 'Electrolytic Copper (Cu)' : 'Aluminum Alloy (E91E)';
+
+      currentState = {
+        calculator: 'Busbar Size & Ampacity Calculator',
+        inputsSummary: `Load: ${reqAmps}A | Material: ${matName} | Fault: ${faultKa}kA/1s | Combined Derating: ${(kTemp * kSurf).toFixed(2)}`,
+        primaryLabel: `Recommended Phase Busbar (${matName})`,
+        primaryValue: `${chosen.runs} Run × ${chosen.bar.size}`,
+        primarySub: `Derated Site Capacity: ${chosen.cap} Amps (Safety Margin: +${Math.max(0, chosen.cap - reqAmps)} A)`,
+        metrics: [
+          { label: 'Total Cross-Section Area / Phase', value: `${chosen.totalArea} sq.mm` },
+          { label: 'Min Area for ' + faultKa + 'kA/1s Short-Circuit', value: `${minFaultArea} sq.mm (Pass)` },
+          { label: 'Operating Current Density', value: `${density} A/sq.mm` },
+          { label: 'Recommended Neutral Busbar (50% / 100%)', value: `1 Run × ${chosen.bar.size}` },
+          { label: 'Recommended Earth Busbar (GI / Cu)', value: mat === 'Cu' ? '50 x 6 mm Cu' : '50 x 6 mm GI' }
+        ]
+      };
+      renderOutput();
+    }
+
+    // 2. CABLE & VOLTAGE DROP ENGINE
+    function calculateCable() {
+      const sys = document.getElementById('cb-system').value;
+      const kw = parseFloat(document.getElementById('cb-kw').value) || 10;
+      const type = document.getElementById('cb-type').value;
+      const len = parseFloat(document.getElementById('cb-length').value) || 50;
+      const pf = parseFloat(document.getElementById('cb-pf').value) || 0.85;
+      const maxDropPct = parseFloat(document.getElementById('cb-vdrop-limit').value) || 5;
+
+      const voltage = sys === '3ph' ? 415 : 240;
+      const sinPhi = Math.sqrt(Math.max(0, 1 - pf * pf));
+      const flc = sys === '3ph'
+        ? (kw * 1000) / (1.732 * voltage * pf)
+        : (kw * 1000) / (voltage * pf);
+
+      const isCu = type === 'Cu-XLPE';
+      const siteDerating = 0.85; // Standard tray/grouping derating factor
+
+      let selected = null;
+      for (let runs = 1; runs <= 4; runs++) {
+        for (let c of CABLE_TABLE) {
+          const baseAmp = isCu ? c.cuAmp : c.alAmp;
+          const totalCap = Math.round(baseAmp * siteDerating * runs);
+          if (totalCap < flc) continue;
+
+          const r = isCu ? c.rCu : c.rAl;
+          const zDropPerAmpKm = (r * pf + c.x * sinPhi);
+          const vDropVolts = sys === '3ph'
+            ? (1.732 * (flc / runs) * (len / 1000) * zDropPerAmpKm)
+            : (2 * (flc / runs) * (len / 1000) * zDropPerAmpKm);
+          const vDropPct = (vDropVolts / voltage) * 100;
+
+          if (vDropPct <= maxDropPct) {
+            selected = { runs, cable: c, cap: totalCap, vDropVolts, vDropPct };
+            break;
+          }
+        }
+        if (selected) break;
+      }
+
+      if (!selected) {
+        const last = CABLE_TABLE[CABLE_TABLE.length - 1];
+        const r = isCu ? last.rCu : last.rAl;
+        const vDropVolts = 1.732 * (flc / 4) * (len / 1000) * (r * pf + last.x * sinPhi);
+        selected = {
+          runs: 4,
+          cable: last,
+          cap: Math.round((isCu ? last.cuAmp : last.alAmp) * siteDerating * 4),
+          vDropVolts,
+          vDropPct: (vDropVolts / voltage) * 100
+        };
+      }
+
+      const cores = sys === '3ph' ? (selected.cable.sqmm >= 25 ? '3.5C' : '4C') : '3C';
+
+      currentState = {
+        calculator: 'Cable Size & Voltage Drop Calculator',
+        inputsSummary: `System: ${voltage}V | Load: ${kw}kW (PF ${pf}) | Length: ${len}m | Type: ${type} | Limit: ${maxDropPct}%`,
+        primaryLabel: `Selected 1.1kV Armoured Cable (${type})`,
+        primaryValue: `${selected.runs} Run × ${cores} × ${selected.cable.sqmm} sq.mm`,
+        primarySub: `Voltage Drop: ${selected.vDropPct.toFixed(2)}% (${selected.vDropVolts.toFixed(1)} V) — Within ${maxDropPct}% Limit`,
+        metrics: [
+          { label: 'Full Load Current (FLC)', value: `${flc.toFixed(1)} Amps` },
+          { label: 'Derated Cable Ampacity (0.85 Factor)', value: `${selected.cap} Amps` },
+          { label: 'Receiving End Voltage', value: `${(voltage - selected.vDropVolts).toFixed(1)} V` },
+          { label: 'Recommended Brass Cable Gland', value: `${selected.runs} Nos × ${selected.cable.gland}` },
+          { label: 'Bimetallic / Crimping Lug Size', value: `${selected.cable.sqmm} sq.mm Heavy Duty` }
+        ]
+      };
+      renderOutput();
+    }
+
+    // 3. MOTOR STARTER SELECTOR ENGINE
+    function calculateMotor() {
+      const val = parseFloat(document.getElementById('mt-power').value) || 15;
+      const unit = document.getElementById('mt-unit').value;
+      const starter = document.getElementById('mt-starter').value;
+      const eff = parseFloat(document.getElementById('mt-eff').value) || 0.91;
+
+      const kw = unit === 'HP' ? val * 0.746 : val;
+      const hp = unit === 'kW' ? val / 0.746 : val;
+      const pf = 0.85;
+      const flc = (kw * 1000) / (1.732 * 415 * pf * eff);
+
+      const pickNext = (arr, target) => arr.find(x => x >= target) || arr[arr.length - 1];
+
+      const mccbRating = pickNext(STANDARD_MCCB, flc * 1.4);
+      let contactorSpec = '';
+      let relayRange = '';
+
+      if (starter === 'DOL') {
+        const mainC = pickNext(STANDARD_CONTACTORS, flc * 1.15);
+        contactorSpec = `Main Contactor: ${mainC}A (AC-3)`;
+        relayRange = `${(flc * 0.8).toFixed(1)}A – ${(flc * 1.15).toFixed(1)}A (Set @ ${flc.toFixed(1)}A)`;
+      } else if (starter === 'ASD') {
+        const phaseCurrent = flc * 0.58;
+        const mainDeltaC = pickNext(STANDARD_CONTACTORS, phaseCurrent * 1.15);
+        const starC = pickNext(STANDARD_CONTACTORS, flc * 0.35);
+        contactorSpec = `Main & Delta: ${mainDeltaC}A | Star: ${starC}A`;
+        relayRange = `${(phaseCurrent * 0.8).toFixed(1)}A – ${(phaseCurrent * 1.15).toFixed(1)}A (Set @ ${phaseCurrent.toFixed(1)}A in Delta Loop)`;
+      } else {
+        const lineC = pickNext(STANDARD_CONTACTORS, flc * 1.1);
+        contactorSpec = `VFD Input Line Contactor: ${lineC}A`;
+        relayRange = `Electronic Overload Built-in VFD (Set @ ${flc.toFixed(1)}A)`;
+      }
+
+      const feederCable = CABLE_TABLE.find(c => (c.cuAmp * 0.85) >= flc * 1.15) || CABLE_TABLE[5];
+
+      currentState = {
+        calculator: 'Motor Starter & Switchgear Selector',
+        inputsSummary: `Motor: ${kw.toFixed(2)} kW (${hp.toFixed(1)} HP) | Starter: ${starter} | 415V 3-Phase IE3`,
+        primaryLabel: `${starter} Feeder Switchgear Specification`,
+        primaryValue: `${flc.toFixed(1)} Amps FLC`,
+        primarySub: `${contactorSpec}`,
+        metrics: [
+          { label: 'Equivalent Motor Rating', value: `${kw.toFixed(2)} kW / ${hp.toFixed(1)} HP` },
+          { label: 'Backup MCCB / MPCB Rating', value: `${mccbRating}A TP (50kA Icu)` },
+          { label: 'Contactor Sizing (AC-3 Duty)', value: contactorSpec },
+          { label: 'Thermal Overload Relay (TOR)', value: relayRange },
+          { label: 'Recommended Copper Feeder Cable', value: starter === 'ASD' ? `2 Runs × 3C × ${feederCable.sqmm} sq.mm Cu` : `1 Run × 3C/4C × ${feederCable.sqmm} sq.mm Cu` }
+        ]
+      };
+      renderOutput();
+    }
+
+    // 4. PANEL THERMAL & COOLING ENGINE (IEC 60890)
+    function calculateThermal() {
+      const h = (parseFloat(document.getElementById('th-h').value) || 2000) / 1000;
+      const w = (parseFloat(document.getElementById('th-w').value) || 1000) / 1000;
+      const d = (parseFloat(document.getElementById('th-d').value) || 600) / 1000;
+      const watts = parseFloat(document.getElementById('th-watts').value) || 500;
+      const mount = document.getElementById('th-mount').value;
+      const tAmb = parseFloat(document.getElementById('th-amb').value) || 38;
+      const tMax = parseFloat(document.getElementById('th-max').value) || 48;
+
+      // IEC 60890 effective cooling surface area Ae (m^2)
+      let ae = 0;
+      if (mount === 'free') {
+        ae = 1.8 * h * (w + d) + 1.4 * w * d;
+      } else if (mount === 'wall') {
+        ae = 1.4 * w * h + 0.7 * w * h + 1.8 * d * h + 1.4 * w * d;
+      } else {
+        ae = 1.4 * w * h + 0.7 * w * h + 0.9 * d * h + 1.4 * w * d;
+      }
+
+      const kSheetSteel = 5.5; // W/(m^2 * K) for painted sheet steel enclosure
+      const deltaT = tMax - tAmb;
+      const naturalDiss = deltaT > 0 ? Math.round(kSheetSteel * ae * deltaT) : 0;
+      const excessWatts = watts - naturalDiss;
+
+      let primaryVal = '';
+      let primarySub = '';
+      let airflowStr = 'Not Required';
+      let acStr = 'Not Required';
+
+      if (deltaT <= 2) {
+        // Ambient is higher than or too close to max internal temp -> Panel AC mandatory
+        const reqAcWatts = Math.ceil((watts + Math.abs(kSheetSteel * ae * (tAmb - tMax))) * 1.15);
+        primaryVal = `${reqAcWatts} W Panel AC Required`;
+        primarySub = `Ambient (${tAmb}°C) is too close to Max Temp (${tMax}°C) for filter fans`;
+        acStr = `${reqAcWatts} W (${Math.round(reqAcWatts * 3.412)} BTU/hr) Panel Air Conditioner`;
+      } else if (excessWatts <= 0) {
+        primaryVal = `Natural Cooling Sufficient`;
+        primarySub = `Enclosure naturally dissipates ${naturalDiss}W (Load: ${watts}W)`;
+      } else {
+        // Filter fan airflow V = (3.1 * P_excess) / deltaT (m^3/hr)
+        const m3hr = Math.ceil((3.1 * excessWatts) / deltaT);
+        const cfm = Math.ceil(m3hr * 0.5886);
+        primaryVal = `${m3hr} m³/hr (${cfm} CFM) Fan`;
+        primarySub = `Excess Heat to Exhaust: ${excessWatts} Watts`;
+        airflowStr = `${m3hr} m³/hr (${cfm} CFM) IP54 Filter Fan + Exhaust Louver`;
+      }
+
+      currentState = {
+        calculator: 'Enclosure Heat Dissipation & Cooling Calculator',
+        inputsSummary: `Panel: ${h*1000}x${w*1000}x${d*1000}mm (${mount}) | Heat Load: ${watts}W | Ambient: ${tAmb}°C | Max Internal: ${tMax}°C`,
+        primaryLabel: 'Recommended Thermal Management Solution',
+        primaryValue: primaryVal,
+        primarySub: primarySub,
+        metrics: [
+          { label: 'Effective Cooling Surface (Ae)', value: `${ae.toFixed(2)} m²` },
+          { label: 'Natural Wall Heat Dissipation', value: `${naturalDiss} Watts` },
+          { label: 'Excess Heat Load to Remove', value: `${Math.max(0, excessWatts)} Watts` },
+          { label: 'Required Forced Fan Airflow', value: airflowStr },
+          { label: 'Closed-Loop Panel AC Alternative', value: acStr === 'Not Required' ? `${Math.ceil(watts * 1.15)} W Panel AC (If Dusty / IP65)` : acStr }
+        ]
+      };
+      renderOutput();
+    }
+
+    // LEAD MODAL & GOOGLE SHEETS SUBMISSION
+    function openLeadModal(actionType) {
+      document.getElementById('leadActionType').value = actionType;
+      document.getElementById('modalTitle').textContent = actionType;
+      document.getElementById('modalSpecPreview').textContent = `${currentState.calculator}: ${currentState.primaryValue} (${currentState.inputsSummary})`;
+      const modal = document.getElementById('leadModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeLeadModal() {
+      const modal = document.getElementById('leadModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    async function submitLeadToGoogleSheets(e) {
+      e.preventDefault();
+      const btn = document.getElementById('submitLeadBtn');
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Saving Specification...`;
+
+      const actionType = document.getElementById('leadActionType').value;
+      const payload = {
+        name: document.getElementById('leadName').value.trim(),
+        company: document.getElementById('leadCompany').value.trim(),
+        phone: document.getElementById('leadPhone').value.trim(),
+        email: document.getElementById('leadEmail').value.trim(),
+        location: document.getElementById('leadLocation').value.trim(),
+        calculator: currentState.calculator,
+        actionType: actionType,
+        inputs: currentState.inputsSummary,
+        results: `${currentState.primaryValue} | ${currentState.primarySub} | ` +
+                 currentState.metrics.map(m => `${m.label}: ${m.value}`).join('; ')
+      };
+
+      try {
+        if (GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes('PASTE_YOUR')) {
+          await fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(payload)
+          });
+        }
+      } catch (err) {
+        console.warn('Offline or Script URL pending:', err);
+      }
+
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+      closeLeadModal();
+
+      // Populate and trigger printable PDF Spec Sheet
+      populatePrintSheet(payload);
+      window.print();
+    }
+
+    function populatePrintSheet(lead) {
+      document.getElementById('printDate').textContent = 'Date: ' + new Date().toLocaleDateString('en-IN');
+      document.getElementById('printRef').textContent = 'Ref: AA-SPEC-' + Math.floor(10000 + Math.random() * 90000);
+      document.getElementById('printCalcTitle').textContent = currentState.calculator;
+      document.getElementById('printClientInfo').innerHTML = `
+        <strong>Prepared For:</strong> ${lead.name} (${lead.company}) | <strong>Contact:</strong> ${lead.phone} | <strong>Project:</strong> ${lead.location || 'Standard Enquiry'}<br/>
+        <strong>Design Inputs:</strong> ${currentState.inputsSummary}
+      `;
+
+      const rows = [
+        `<tr style="background:#eff6ff; font-weight:700;">
+          <td style="padding:8px; border:1px solid #cbd5e1;">${currentState.primaryLabel}</td>
+          <td style="padding:8px; border:1px solid #cbd5e1; color:#1d4ed8;">${currentState.primaryValue} (${currentState.primarySub})</td>
+        </tr>`,
+        ...currentState.metrics.map(m => `
+          <tr>
+            <td style="padding:8px; border:1px solid #cbd5e1;">${m.label}</td>
+            <td style="padding:8px; border:1px solid #cbd5e1;">${m.value}</td>
+          </tr>
+        `)
+      ];
+      document.getElementById('printTableBody').innerHTML = rows.join('');
+    }
+
+    function shareToolkitWhatsApp() {
+      const msg = `*Aryavarta Industrial Electrical & PLC Calculator Result*\n` +
+                  `• *Tool:* ${currentState.calculator}\n` +
+                  `• *Inputs:* ${currentState.inputsSummary}\n` +
+                  `• *Recommended Spec:* ${currentState.primaryValue}\n` +
+                  `• *Details:* ${currentState.primarySub}\n\n` +
+                  `Try the free consultant toolkit by Aryavarta Automation: ${window.location.href}`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+    }
+
+    // PWA Service Worker & Install Prompt
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      const btn = document.getElementById('installPwaBtn');
+      btn.classList.remove('hidden');
+      btn.onclick = async () => {
+        deferredPrompt.prompt();
+        await deferredPrompt.userChoice;
+        btn.classList.add('hidden');
+      };
+    });
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(() => {});
+      });
+    }
+
+    // Initialize default calculator on load
+    window.addEventListener('DOMContentLoaded', calculateBusbar);
+  </script>
+</body>
+</html>
