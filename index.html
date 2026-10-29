@@ -902,5 +902,453 @@
     // Initialize default calculator on load
     window.addEventListener('DOMContentLoaded', calculateBusbar);
   </script>
+<!-- ====================================================================== -->
+<!-- ARYAVARTA PRO REVENUE UPGRADE: APFC ROI, BOM CART & WHATSAPP ENGINE    -->
+<!-- Paste this entire block right before </body> in index.html             -->
+<!-- ====================================================================== -->
+
+<!-- Floating Panel Schedule (BOM Cart) Bar -->
+<div id="bomFloatingBar" class="fixed bottom-4 right-4 z-40 no-print">
+  <button onclick="toggleBomModal()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold px-4 py-3 rounded-2xl shadow-2xl shadow-amber-500/30 flex items-center gap-2.5 text-xs sm:text-sm transition transform hover:scale-105">
+    <i class="fa-solid fa-layer-group text-base"></i>
+    <span>Panel Schedule / BOM</span>
+    <span id="bomCountBadge" class="bg-slate-950 text-amber-400 px-2 py-0.5 rounded-full text-xs font-mono">0</span>
+  </button>
+</div>
+
+<!-- Multi-Feeder Panel Schedule Modal -->
+<div id="bomModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4 no-print">
+  <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-3xl w-full p-6 shadow-2xl relative max-h-[90vh] flex flex-col">
+    <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+      <div>
+        <h3 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-clipboard-list text-amber-400"></i>
+          Multi-Feeder Panel Schedule & Tender BOM Builder
+        </h3>
+        <p class="text-xs text-slate-400">Combine multiple calculations (Incomers, Busbars, DOL/ASD/VFD Feeders, Cooling) into one turnkey panel enquiry.</p>
+      </div>
+      <button onclick="toggleBomModal()" class="text-slate-400 hover:text-white">
+        <i class="fa-solid fa-xmark text-xl"></i>
+      </button>
+    </div>
+
+    <!-- Schedule Table -->
+    <div class="overflow-y-auto flex-1 border border-slate-800 rounded-xl bg-slate-950 mb-4">
+      <table class="w-full text-left text-xs">
+        <thead class="bg-slate-900 text-slate-300 border-b border-slate-800 sticky top-0">
+          <tr>
+            <th class="p-3">#</th>
+            <th class="p-3">Feeder / Tag Name</th>
+            <th class="p-3">Section</th>
+            <th class="p-3">Inputs</th>
+            <th class="p-3">Recommended Spec</th>
+            <th class="p-3 text-right">Action</th>
+          </tr>
+        </thead>
+        <tbody id="bomTableBody" class="divide-y divide-slate-800/70 text-slate-200">
+          <!-- Populated dynamically -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Modal Actions -->
+    <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800">
+      <div class="flex items-center gap-2">
+        <button onclick="exportBomCsv()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold px-3 py-2 rounded-xl text-xs flex items-center gap-1.5">
+          <i class="fa-solid fa-file-csv text-emerald-400"></i> Export Excel (.CSV)
+        </button>
+        <button onclick="clearBomCart()" class="bg-slate-950 hover:bg-rose-950/50 text-rose-400 border border-slate-800 font-semibold px-3 py-2 rounded-xl text-xs">
+          Clear All
+        </button>
+      </div>
+      <button onclick="quoteFullBomSchedule()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-2.5 rounded-xl text-xs sm:text-sm flex items-center gap-2 shadow-lg shadow-blue-600/30">
+        <i class="fa-solid fa-file-signature"></i> Request Turnkey Quote for Full Schedule
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // BOM cart state (declared first so the init block below can use it)
+  let bomCart = JSON.parse(localStorage.getItem('aa_bom_cart') || '[]');
+
+  // ========================================================================
+  // 1. INJECT 5TH CALCULATOR TAB: APFC CAPACITOR & MSEDCL BILL ROI
+  // ========================================================================
+  (function initProUpgrades() {
+    // Expand tab bar to 5 columns on desktop and inject APFC tab
+    const tabBar = document.querySelector('.grid.grid-cols-2.lg\\:grid-cols-4');
+    if (tabBar) {
+      tabBar.classList.remove('lg:grid-cols-4');
+      tabBar.classList.add('lg:grid-cols-5');
+
+      const apfcTabBtn = document.createElement('button');
+      apfcTabBtn.id = 'tab-apfc';
+      apfcTabBtn.className = 'tab-btn flex items-center gap-2.5 p-3 rounded-xl border border-slate-800 bg-slate-900 text-slate-300 hover:bg-slate-800/80 text-left transition col-span-2 lg:col-span-1';
+      apfcTabBtn.onclick = () => switchTab('apfc');
+      apfcTabBtn.innerHTML = `
+        <i class="fa-solid fa-indian-rupee-sign text-lg text-cyan-400"></i>
+        <div>
+          <div class="text-xs font-bold uppercase tracking-wider">5. APFC & ROI</div>
+          <div class="text-[11px] opacity-80">kVAR & MSEDCL Savings</div>
+        </div>
+      `;
+      tabBar.appendChild(apfcTabBtn);
+    }
+
+    // Inject APFC Calculator Input Panel into Left Column
+    const leftCol = document.querySelector('.lg\\:col-span-7');
+    if (leftCol) {
+      const apfcSection = document.createElement('section');
+      apfcSection.id = 'panel-apfc';
+      apfcSection.className = 'calc-panel hidden space-y-4';
+      apfcSection.innerHTML = `
+        <div class="border-b border-slate-800 pb-3">
+          <h2 class="text-lg font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-indian-rupee-sign text-cyan-400"></i> APFC Capacitor Bank & MSEDCL Bill Savings Calculator
+          </h2>
+          <p class="text-xs text-slate-400 mt-0.5">Sizes APFC kVAR stages, harmonic detuned reactors, and calculates monthly kVAh electricity bill savings & ROI.</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Running Plant Load (kW)</label>
+            <input type="number" id="ap-kw" value="250" min="10" step="10" oninput="calculateApfc()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Existing Power Factor (cos φ1)</label>
+            <input type="number" id="ap-pf1" value="0.78" min="0.50" max="0.98" step="0.01" oninput="calculateApfc()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Target Power Factor (cos φ2)</label>
+            <select id="ap-pf2" onchange="calculateApfc()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
+              <option value="0.99" selected>0.99 Lag (Zero kVAh Penalty)</option>
+              <option value="0.98">0.98 Lag (Standard Industrial)</option>
+              <option value="0.995">0.995 Unity (Maximum Rebate)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Harmonic Pollution / Load Profile</label>
+            <select id="ap-harmonics" onchange="calculateApfc()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
+              <option value="0">Low (<15% VFD Load) — 440V MPP Heavy Duty</option>
+              <option value="7" selected>Medium (20–50% VFD/ups) — 7% Detuned Reactor + 480V Cap</option>
+              <option value="14">High (>50% VFD/Furnace) — 14% Detuned Reactor + 525V Cap</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Switching Technology</label>
+            <select id="ap-switch" onchange="calculateApfc()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
+              <option value="Contactor" selected>Capacitor Duty Contactors (Standard Loads)</option>
+              <option value="RTPFC">Thyristor Switching (RTPFC for Fast Welding/Cranes)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Working Hours/Day & Tariff (₹/kVAh)</label>
+            <div class="grid grid-cols-2 gap-2">
+              <input type="number" id="ap-hours" value="16" min="4" max="24" oninput="calculateApfc()" title="Operating Hours per Day" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" placeholder="Hrs/Day" />
+              <input type="number" id="ap-rate" value="9.5" min="5" max="18" step="0.5" oninput="calculateApfc()" title="MSEDCL Tariff ₹/kVAh" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" placeholder="₹/Unit" />
+            </div>
+          </div>
+        </div>
+      `;
+      leftCol.appendChild(apfcSection);
+    }
+
+    // Inject "+ Add Feeder to Panel Schedule" Button into Right Column CTA box
+    const ctaContainer = document.querySelector('.border-t.border-slate-800.pt-4.space-y-2\\.5');
+    if (ctaContainer) {
+      const addBomBtn = document.createElement('button');
+      addBomBtn.type = 'button';
+      addBomBtn.onclick = addCurrentToBomCart;
+      addBomBtn.className = 'w-full bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/40 font-bold py-2.5 px-4 rounded-xl transition flex items-center justify-center gap-2 text-xs sm:text-sm';
+      addBomBtn.innerHTML = `<i class="fa-solid fa-plus-circle"></i> Add This Spec to Multi-Feeder Panel Schedule (BOM)`;
+      ctaContainer.insertBefore(addBomBtn, ctaContainer.children[1]);
+    }
+
+    // Load saved consultant profile & flush any offline leads
+    loadSavedEngineerProfile();
+    flushOfflineLeadQueue();
+    renderBomCart();
+  })();
+
+  // Extend switchTab to support 'apfc'
+  const _originalSwitchTab = window.switchTab;
+  window.switchTab = function(tabId) {
+    _originalSwitchTab(tabId);
+    if (tabId === 'apfc') calculateApfc();
+  };
+
+  // ========================================================================
+  // 2. APFC & MSEDCL SAVINGS ENGINE
+  // ========================================================================
+  function calculateApfc() {
+    const kw = parseFloat(document.getElementById('ap-kw').value) || 200;
+    const pf1 = Math.min(0.97, Math.max(0.4, parseFloat(document.getElementById('ap-pf1').value) || 0.78));
+    const pf2 = parseFloat(document.getElementById('ap-pf2').value) || 0.99;
+    const reactorPct = document.getElementById('ap-harmonics').value;
+    const swType = document.getElementById('ap-switch').value;
+    const hrs = parseFloat(document.getElementById('ap-hours').value) || 16;
+    const rate = parseFloat(document.getElementById('ap-rate').value) || 9.5;
+
+    const phi1 = Math.acos(pf1);
+    const phi2 = Math.acos(pf2);
+    const rawKvar = kw * (Math.tan(phi1) - Math.tan(phi2));
+
+    // Standard industrial APFC panel sizes
+    const stdBanks = [25, 35, 50, 60, 75, 100, 125, 150, 175, 200, 250, 300, 350, 400, 500, 600, 750, 1000];
+    const selectedKvar = stdBanks.find(b => b >= rawKvar * 1.05) || Math.ceil(rawKvar / 50) * 50;
+
+    // kVAh Reduction & Monthly Savings (26 working days/month)
+    const kvahBefore = kw / pf1;
+    const kvahAfter = kw / pf2;
+    const kvahSavedPerHr = Math.max(0, kvahBefore - kvahAfter);
+    const monthlySavingsRs = Math.round(kvahSavedPerHr * hrs * 26 * rate);
+
+    // Approximate Panel Cost for ROI Estimation
+    const approxCostPerKvar = reactorPct === '0' ? 1450 : (swType === 'RTPFC' ? 3200 : 2450);
+    const estPanelInvestment = selectedKvar * approxCostPerKvar;
+    const paybackMonths = monthlySavingsRs > 0 ? (estPanelInvestment / monthlySavingsRs).toFixed(1) : 'N/A';
+
+    // Step Configuration
+    const steps = selectedKvar <= 100 ? '6 Stages (e.g. 5+10+10+25+25+25 kVAR)' : '8 to 12 Stages Automatic Microprocessor Relay';
+    const filterSpec = reactorPct === '0'
+      ? '440V APP/MPP Heavy Duty Cylindrical Capacitors'
+      : `${reactorPct}% Copper/Al Detuned Harmonic Reactor + ${reactorPct === '7' ? '480V' : '525V'} Heavy Duty Capacitors`;
+
+    currentState = {
+      calculator: 'APFC Panel & MSEDCL Bill Savings Calculator',
+      inputsSummary: `Load: ${kw}kW | PF: ${pf1} to ${pf2} | Filter: ${reactorPct}% Detuned | ${swType} | ${hrs}h/day @ ₹${rate}/kVAh`,
+      primaryLabel: `Recommended ${swType} Panel Rating`,
+      primaryValue: `${selectedKvar} kVAR APFC Panel`,
+      primarySub: `Est. Monthly Bill Saving: ₹${monthlySavingsRs.toLocaleString('en-IN')}/month (ROI Payback: ~${paybackMonths} Months)`,
+      metrics: [
+        { label: 'Exact Reactive Power Required', value: `${rawKvar.toFixed(1)} kVAR (Selected: ${selectedKvar} kVAR)` },
+        { label: 'Monthly MSEDCL kVAh Bill Savings', value: `₹${monthlySavingsRs.toLocaleString('en-IN')} / Month (₹${(monthlySavingsRs * 12).toLocaleString('en-IN')} / Year)` },
+        { label: 'Estimated Capital Payback Period', value: `${paybackMonths} Months` },
+        { label: 'Capacitor & Harmonic Filter Spec', value: filterSpec },
+        { label: 'Recommended Step Configuration', value: steps }
+      ]
+    };
+    renderOutput();
+  }
+
+  // ========================================================================
+  // 3. MULTI-FEEDER PANEL SCHEDULE (BOM CART) LOGIC
+  // ========================================================================
+
+  function addCurrentToBomCart() {
+    const tag = prompt('Enter Feeder Tag / Name (e.g., Mill Motor-1, Main Incomer, VFD-02):', `Feeder-${bomCart.length + 1}`);
+    if (tag === null) return;
+
+    bomCart.push({
+      id: Date.now(),
+      tag: tag.trim() || `Feeder-${bomCart.length + 1}`,
+      calculator: currentState.calculator,
+      inputs: currentState.inputsSummary,
+      spec: `${currentState.primaryValue} (${currentState.primarySub})`
+    });
+
+    localStorage.setItem('aa_bom_cart', JSON.stringify(bomCart));
+    renderBomCart();
+  }
+
+  function removeBomItem(id) {
+    bomCart = bomCart.filter(item => item.id !== id);
+    localStorage.setItem('aa_bom_cart', JSON.stringify(bomCart));
+    renderBomCart();
+  }
+
+  function clearBomCart() {
+    bomCart = [];
+    localStorage.setItem('aa_bom_cart', JSON.stringify(bomCart));
+    renderBomCart();
+  }
+
+  function renderBomCart() {
+    const badge = document.getElementById('bomCountBadge');
+    if (badge) badge.textContent = bomCart.length;
+
+    const tbody = document.getElementById('bomTableBody');
+    if (!tbody) return;
+
+    if (bomCart.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-500">No feeders added yet. Run any calculation and click <strong>"Add This Spec to Multi-Feeder Panel Schedule"</strong>.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = bomCart.map((item, idx) => `
+      <tr class="hover:bg-slate-900/60">
+        <td class="p-3 font-mono text-slate-400">${idx + 1}</td>
+        <td class="p-3 font-bold text-amber-400">${item.tag}</td>
+        <td class="p-3 text-slate-300">${item.calculator.replace(' Calculator', '').replace(' Selector', '')}</td>
+        <td class="p-3 text-slate-400">${item.inputs}</td>
+        <td class="p-3 font-semibold text-emerald-300">${item.spec}</td>
+        <td class="p-3 text-right">
+          <button onclick="removeBomItem(${item.id})" class="text-rose-400 hover:text-rose-300 px-2 py-1">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function toggleBomModal() {
+    const m = document.getElementById('bomModal');
+    m.classList.toggle('hidden');
+    m.classList.toggle('flex');
+  }
+
+  function exportBomCsv() {
+    if (bomCart.length === 0) return alert('Add at least one feeder to your Panel Schedule first.');
+    const headers = ['Sr.No', 'Feeder Tag', 'Category', 'Design Inputs', 'Recommended Specification'];
+    const rows = bomCart.map((item, i) => [
+      i + 1,
+      `"${item.tag.replace(/"/g, '""')}"`,
+      `"${item.calculator}"`,
+      `"${item.inputs.replace(/"/g, '""')}"`,
+      `"${item.spec.replace(/"/g, '""')}"`
+    ]);
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    const link = document.createElement('a');
+    link.setAttribute('href', encodeURI(csvContent));
+    link.setAttribute('download', `Aryavarta_Panel_Schedule_${new Date().toISOString().slice(0,10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  }
+
+  function quoteFullBomSchedule() {
+    if (bomCart.length === 0) return alert('Your Panel Schedule is empty. Add feeders first.');
+    toggleBomModal();
+
+    // Temporarily set currentState to represent the entire multi-feeder BOM schedule
+    const combinedInputs = bomCart.map((item, i) => `[${i+1}] ${item.tag}: ${item.inputs}`).join(' || ');
+    const combinedSpecs = bomCart.map((item, i) => `[${i+1}] ${item.tag} -> ${item.spec}`).join(' || ');
+
+    currentState = {
+      calculator: `Complete Multi-Feeder Panel Schedule (${bomCart.length} Feeders)`,
+      inputsSummary: combinedInputs,
+      primaryLabel: `Turnkey Panel Schedule (${bomCart.length} Configured Items)`,
+      primaryValue: `${bomCart.length} Feeders / Sections`,
+      primarySub: 'Full custom PCC / MCC / VFD / APFC lineup attached',
+      metrics: bomCart.map((item, i) => ({
+        label: `${i + 1}. ${item.tag} (${item.calculator.split(' ')[0]})`,
+        value: item.spec
+      }))
+    };
+
+    openLeadModal('Turnkey Multi-Feeder Panel Quote');
+  }
+
+  // ========================================================================
+  // 4. CONSULTANT AUTO-FILL, OFFLINE SYNC & INSTANT WHATSAPP HOT-LEAD BRIDGE
+  // ========================================================================
+  function loadSavedEngineerProfile() {
+    try {
+      const saved = JSON.parse(localStorage.getItem('aa_engineer_profile') || '{}');
+      if (saved.name) document.getElementById('leadName').value = saved.name;
+      if (saved.company) document.getElementById('leadCompany').value = saved.company;
+      if (saved.phone) document.getElementById('leadPhone').value = saved.phone;
+      if (saved.email) document.getElementById('leadEmail').value = saved.email;
+      if (saved.location) document.getElementById('leadLocation').value = saved.location;
+    } catch (e) {}
+  }
+
+  // Override submitLeadToGoogleSheets to add Profile Memory, Offline Queue, and WhatsApp Desk Trigger
+  window.submitLeadToGoogleSheets = async function(e) {
+    e.preventDefault();
+    const btn = document.getElementById('submitLeadBtn');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Processing Specification...`;
+
+    const actionType = document.getElementById('leadActionType').value;
+    const payload = {
+      name: document.getElementById('leadName').value.trim(),
+      company: document.getElementById('leadCompany').value.trim(),
+      phone: document.getElementById('leadPhone').value.trim(),
+      email: document.getElementById('leadEmail').value.trim(),
+      location: document.getElementById('leadLocation').value.trim(),
+      calculator: currentState.calculator,
+      actionType: actionType,
+      inputs: currentState.inputsSummary,
+      results: `${currentState.primaryValue} | ${currentState.primarySub} | ` +
+               currentState.metrics.map(m => `${m.label}: ${m.value}`).join('; ')
+    };
+
+    // Save consultant profile so they never have to re-type next time
+    localStorage.setItem('aa_engineer_profile', JSON.stringify({
+      name: payload.name,
+      company: payload.company,
+      phone: payload.phone,
+      email: payload.email,
+      location: payload.location
+    }));
+
+    // Send to Google Sheets or queue if offline in factory basement
+    try {
+      if (GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes('PASTE_YOUR')) {
+        await fetch(GOOGLE_SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(payload)
+        });
+      }
+    } catch (err) {
+      const queue = JSON.parse(localStorage.getItem('aa_offline_leads') || '[]');
+      queue.push(payload);
+      localStorage.setItem('aa_offline_leads', JSON.stringify(queue));
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = originalText;
+    closeLeadModal();
+
+    // Populate print sheet & open PDF print dialog
+    populatePrintSheet(payload);
+    window.print();
+
+    // If they asked for an Official Quote, also offer instant 1-Click WhatsApp to Aryavarta Sales Desk
+    if (actionType.includes('Quote') && COMPANY_WHATSAPP) {
+      setTimeout(() => {
+        const waMsg = `*New Panel Quote Enquiry — Aryavarta Toolkit*\n\n` +
+                      `*Consultant:* ${payload.name} (${payload.company})\n` +
+                      `*Phone:* ${payload.phone}\n` +
+                      `*Project/Site:* ${payload.location || 'Pune / MIDC'}\n` +
+                      `*Requirement:* ${payload.calculator}\n` +
+                      `*Design Inputs:* ${payload.inputs}\n` +
+                      `*Calculated Spec:* ${ currentState.primaryValue } (${ currentState.primarySub })\n\n` +
+                      `Please share official Aryavarta Automation budgetary quote & GA details.`;
+        if (confirm('Specification generated! Click OK to also send this enquiry directly to Aryavarta Automation Sales Desk on WhatsApp for priority quotation.')) {
+          window.open(`https://wa.me/${COMPANY_WHATSAPP}?text=${encodeURIComponent(waMsg)}`, '_blank');
+        }
+      }, 600);
+    }
+  };
+
+  // Auto-sync any queued offline leads when engineer regains internet connection
+  async function flushOfflineLeadQueue() {
+    if (!navigator.onLine || !GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes('PASTE_YOUR')) return;
+    const queue = JSON.parse(localStorage.getItem('aa_offline_leads') || '[]');
+    if (queue.length === 0) return;
+
+    const remaining = [];
+    for (const item of queue) {
+      try {
+        await fetch(GOOGLE_SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(item)
+        });
+      } catch (err) {
+        remaining.push(item);
+      }
+    }
+    localStorage.setItem('aa_offline_leads', JSON.stringify(remaining));
+  }
+  window.addEventListener('online', flushOfflineLeadQueue);
+</script>
 </body>
 </html>
